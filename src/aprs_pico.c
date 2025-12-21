@@ -57,8 +57,11 @@ static audio_buffer_pool_t* aprs_pico_initAudio(unsigned int sample_freq_in_hz, 
   static audio_buffer_format_t producer_format = {.format        = &audio_format,
                                                   .sample_stride = 2};
 
+  // ATTOW, the following assignment had no effect since the pico-extra audio PWM lib is limited by *always* using a
+  // sampling frequency of *22050 Hz* @ 48 MHz system clock. So, we do this setting just pro forma and we'll
+  // compensate for any different sampling frequency by tweaking the system clock accordingly. That's our trick.
+  audio_format.sample_freq = sample_freq_in_hz; // Will be ignored by the pico-extra audio PWM lib
   audio_format.format = audio_buffer_format;
-  audio_format.sample_freq = sample_freq_in_hz;
 
   audio_buffer_pool_t* producer_pool = audio_new_producer_pool(&producer_format, NUM_AUDIO_BUFFERS, SAMPLES_PER_BUFFER);
 
