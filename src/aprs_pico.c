@@ -58,7 +58,7 @@ static audio_buffer_pool_t* aprs_pico_initAudio(unsigned int sample_freq_in_hz, 
                                                   .sample_stride = 2};
 
   // ATTOW, the following assignment had no effect since the pico-extra audio PWM lib is limited by *always* using a
-  // sampling frequency of *22050 Hz* @ 48 MHz system clock. So, we do this setting just pro forma and we'll
+  // sampling frequency of *22050 Hz* @ 48 MHz system clock. So, we do this setting just pro forma, and we'll
   // compensate for any different sampling frequency by tweaking the system clock accordingly. That's our trick.
   audio_format.sample_freq = sample_freq_in_hz; // Will be ignored by the pico-extra audio PWM lib
   audio_format.format = audio_buffer_format;
@@ -70,7 +70,7 @@ static audio_buffer_pool_t* aprs_pico_initAudio(unsigned int sample_freq_in_hz, 
       panic("PicoAudio: Unable to open audio device.\n");
     }
 
-  bool __unused is_ok = audio_pwm_default_connect(producer_pool, false);
+  const bool __unused is_ok = audio_pwm_default_connect(producer_pool, false);
   assert(is_ok);
 
   audio_pwm_set_enabled(true);
@@ -97,7 +97,7 @@ static void aprs_pico_initClock(unsigned int sample_freq_in_hz)
   if (!set_sys_clock_khz((uint32_t)(1000.0f * sys_clock_in_mhz), false))
     {
       // Round to full MHz to increase the chance that 'set_sys_clock_khz()' can exactly attain this frequency
-      sys_clock_in_mhz = round(sys_clock_in_mhz);
+      sys_clock_in_mhz = roundf(sys_clock_in_mhz);
 
       // With the second parameter set 'true', the function will assert if the frequency is not attainable
       set_sys_clock_khz(1000u * (uint32_t)sys_clock_in_mhz, true);
@@ -120,8 +120,8 @@ static void aprs_pico_renderAudioSamples(audio_buffer_pool_t* audio_buffer_pool,
   assert(audio_buffer_pool != NULL);
   assert(pcm_data          != NULL);
 
-  bool do_loop_forever          = num_loops < 0;
-  bool is_all_samples_processed = (num_samples == 0u) || (num_loops == 0);
+  const bool do_loop_forever    = num_loops < 0;
+  bool is_all_samples_processed = num_samples == 0u || num_loops == 0;
 
   unsigned int idx_src = 0u;
 
@@ -136,9 +136,9 @@ static void aprs_pico_renderAudioSamples(audio_buffer_pool_t* audio_buffer_pool,
       unsigned int idx_dst = 0u;
 
       // Fill the current audio buffer
-      while (!is_all_samples_processed && (idx_dst < audio_buffer->max_sample_count))
+      while (!is_all_samples_processed && idx_dst < audio_buffer->max_sample_count)
         {
-          audio_buffer_pcm_data[idx_dst] = ((int32_t)volume * (int32_t)pcm_data[idx_src]) >> 8u;
+          audio_buffer_pcm_data[idx_dst] = (int16_t)(((int32_t)volume * (int32_t)pcm_data[idx_src]) >> 8u);
 
           idx_src++;
           idx_dst++;
@@ -182,7 +182,7 @@ static void aprs_pico_sendAPRSAudioCallback(const void* callback_user_data, cons
   assert(callback_user_data != NULL);
   assert(pcm_data           != NULL);
 
-  const AudioCallBackUserData_t user_data = *((AudioCallBackUserData_t*)callback_user_data);
+  const AudioCallBackUserData_t user_data = *(AudioCallBackUserData_t*)callback_user_data;
 
   aprs_pico_initClock(sample_freq_in_hz);
   aprs_pico_renderAudioSamples(user_data.audio_buffer_pool, pcm_data, num_samples, user_data.volume, 1);
@@ -224,7 +224,7 @@ void aprs_pico_play_sine_wave(audio_buffer_pool_t* audio_buffer_pool, unsigned i
       sine_period_wave_table[i] = (wave_table_value_t)((float)WAVE_TABLE_VALUE_MAX * sinf(2.0f * (float)M_PI * (float)i / (float)num_samples_per_period));
     }
 
-  const int num_loops = duration_in_ms < 0 ? -1 : (duration_in_ms * (int)freq_in_hz / 1000);
+  const int num_loops = duration_in_ms < 0 ? -1 : duration_in_ms * (int)freq_in_hz / 1000;
 
   aprs_pico_renderAudioSamples(audio_buffer_pool, sine_period_wave_table, num_samples_per_period, volume, num_loops);
 
@@ -258,18 +258,18 @@ bool aprs_pico_sendAPRS(audio_buffer_pool_t* audio_buffer_pool,
   callback_user_data.audio_buffer_pool = audio_buffer_pool;
   callback_user_data.volume            = volume;
 
-  int ret_val = ax25_beacon((void*)&callback_user_data,
-                            aprs_pico_sendAPRSAudioCallback,
-                            call_sign_src,
-                            call_sign_dst,
-                            aprs_path_1,
-                            aprs_path_2,
-                            latitude_in_deg,
-                            longitude_in_deg,
-                            altitude_in_m,
-                            aprs_message,
-                            sym_table,
-                            sym_code);
+  const int ret_val = ax25_beacon(&callback_user_data,
+                                  aprs_pico_sendAPRSAudioCallback,
+                                  call_sign_src,
+                                  call_sign_dst,
+                                  aprs_path_1,
+                                  aprs_path_2,
+                                  latitude_in_deg,
+                                  longitude_in_deg,
+                                  altitude_in_m,
+                                  aprs_message,
+                                  sym_table,
+                                  sym_code);
 
   return ret_val == AX25_OK;
 }
