@@ -64,6 +64,9 @@ add_executable(${TARGET_DEMO_EXE_NAME}
     src/aprs_pico_beacon_demo.c
 )
 
+pico_enable_stdio_usb(aprs_pico_beacon_demo 1)
+pico_enable_stdio_uart(aprs_pico_beacon_demo 0)
+
 target_compile_options(${TARGET_DEMO_EXE_NAME}
   PRIVATE "${APRS_PICO_COMPILE_WARN_OPTIONS}"
 )
