@@ -34,7 +34,7 @@
 #define PTT_GPXX_PIN (19)
 #define PD_GPXX_PIN (22)
 #define PTT_DELAY_BEFORE_TX_IN_MSEC (1000)
-#define PTT_TX_PERIOD_IN_MIN (10)
+#define PTT_TX_PERIOD_IN_MIN (2)
 
 // SA818
 #define RADIO_UART uart1
@@ -261,14 +261,14 @@ int main() {
         // Send an APRS test message
         aprs_pico_sendAPRS(audio_buffer_pool,
                            "OE6UKN-12",                 // Source call sign
-                           "APPIPI",                    // Destination call sign
+                           "APRS",                    // Destination call sign
                            "WIDE1-1",                   // APRS path #1
-                           "WIDE2-2",                   // APRS path #2
+                           "WIDE2-1",                   // APRS path #2
                            "Pico Tracker by eleccoder", // Text
                            current_gps.lat, current_gps.lon,
                            0,     // Altitude  (in m)
                            '/',   // APRS symbol table: Primary
-                           '>',   // APRS symbol code:  Car
+                           '<',   // APRS symbol code:  Car
                            128u); // Volume    (0 ... 256)
 
         gpio_put(PTT_GPXX_PIN, true);
