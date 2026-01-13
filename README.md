@@ -1,4 +1,4 @@
-# APRS Beacon #
+# APRS Beacon
 This project demonstrates how to use [raspi-pico-aprs-tnc](https://github.com/eleccoder/raspi-pico-aprs-tnc/tree/main) to build a standalone APRS beacon with minimal additional hardware. 
 ### Hardware used 
 - **Raspberry Pi Pico 2 (RP2350)** 
@@ -30,6 +30,7 @@ All known errors are already fixed in the schematic shown above.
 The PCB provides a minimal, self-contained APRS beacon requiring only power and an antenna.
 
 ---
+this is the [mostly](https://github.com/eleccoder/raspi-pico-aprs-tnc/commit/0522282a0661546249ecfa81b2c365f10a749b2c) [original documentation](https://github.com/eleccoder/raspi-pico-aprs-tnc/blob/main/README.md), I changed some things (removed the word demo) to fit my project above better.
 
 # raspi-pico-aprs-tnc
 <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/eleccoder/raspi-pico-aprs-tnc">
@@ -124,7 +125,6 @@ arecord -f cd -c 1 - | direwolf -
 
 # Ingredients / Acknowledgements
 - A **HUGE** thanks to the [original author](https://github.com/eleccoder) of the [library](https://github.com/eleccoder/raspi-pico-aprs-tnc/tree/main) and the basic beacon demo
-<img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/eleccoder/raspi-pico-aprs-tnc">
 - For `APRS Payload => AX.25 => AFSK (PCM)` conversion I'm using [my modified version](https://github.com/eleccoder/ax25-aprs-lib) of [fsphil's ax25beacon](https://github.com/fsphil/ax25beacon) project.
 - For `PCM => PWM` conversion I'm using the `pico_audio_pwm` library from [pico-extras](https://github.com/raspberrypi/pico-extras) (NOTE: ATTOW, maturity seems to be rather alpha/beta).
 - Basic PWM audio rendering with the Pi Pico has been spotted in the [pico-playground](https://github.com/raspberrypi/pico-playground/tree/master/audio).
