@@ -58,14 +58,14 @@ target_link_libraries(${TARGET_LIB_NAME}
 
 # ##### Configure the build of the DEMO applications #####
 
-set(TARGET_DEMO_EXE_NAME aprs_pico_beacon_demo)
+set(TARGET_DEMO_EXE_NAME aprs_pico_beacon)
 
 add_executable(${TARGET_DEMO_EXE_NAME}
-    src/aprs_pico_beacon_demo.c
+    src/aprs_pico_beacon.c
 )
 
-pico_enable_stdio_usb(aprs_pico_beacon_demo 1)
-pico_enable_stdio_uart(aprs_pico_beacon_demo 0)
+pico_enable_stdio_usb(aprs_pico_beacon 1)
+pico_enable_stdio_uart(aprs_pico_beacon 0)
 
 target_compile_options(${TARGET_DEMO_EXE_NAME}
   PRIVATE "${APRS_PICO_COMPILE_WARN_OPTIONS}"
@@ -87,26 +87,26 @@ target_link_libraries(${TARGET_DEMO_EXE_NAME}
 
 
 # ##### Configure the build of the TEST application #####
-
-set(TARGET_TEST_EXE_NAME aprs_pico_tone_test)
-
-add_executable(${TARGET_TEST_EXE_NAME}
-    src/aprs_pico_tone_test.c
-)
-
-target_compile_options(${TARGET_TEST_EXE_NAME}
-  PRIVATE "${APRS_PICO_COMPILE_WARN_OPTIONS}"
-)
-
-target_include_directories(${TARGET_TEST_EXE_NAME} PRIVATE
-  include
-)
-
+#
+# set(TARGET_TEST_EXE_NAME aprs_pico_tone_test)
+#
+#add_executable(${TARGET_TEST_EXE_NAME}
+#    src/aprs_pico_tone_test.c
+#)
+#
+#target_compile_options(${TARGET_TEST_EXE_NAME}
+#  PRIVATE "${APRS_PICO_COMPILE_WARN_OPTIONS}"
+#)
+#
+#target_include_directories(${TARGET_TEST_EXE_NAME} PRIVATE
+#  include
+#)
+#
 # Create map/bin/hex file etc.
-pico_add_extra_outputs(${TARGET_TEST_EXE_NAME})
-
-target_link_libraries(${TARGET_TEST_EXE_NAME}
-    ${TARGET_LIB_NAME}
-    pico_audio_pwm        
-    pico_stdlib
-)
+#pico_add_extra_outputs(${TARGET_TEST_EXE_NAME})
+#
+#target_link_libraries(${TARGET_TEST_EXE_NAME}
+#    ${TARGET_LIB_NAME}
+#    pico_audio_pwm        
+#    pico_stdlib
+#)

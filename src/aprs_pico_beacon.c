@@ -16,12 +16,6 @@
 * along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/* This program demonstrates the usage of the 'libaprs_pico.a' library by
- * showing how to send a static APRS beacon.
- *
- * Optionally, PTT control can be enabled (see the #define section down below).
- */
-
 #include "aprs_pico.h"
 #include "hardware/uart.h"
 #include "pico/stdlib.h"
@@ -30,7 +24,6 @@
 #include <string.h>
 
 // Define whether/how the RPi Pico should control a transmitter's PTT input
-#define PTT_ENABLE (true)
 #define PTT_GPXX_PIN (19)
 #define PD_GPXX_PIN (22)
 #define PTT_DELAY_BEFORE_TX_IN_MSEC (1000)
@@ -55,15 +48,10 @@ typedef struct {
   bool valid;
 } gps_data_t;
 
-bool ConfigureRadio(const char *freq) {
+bool configure_radio(const char *freq) {
   printf("\n--- SA818 Configuration Mode ---\n");
 
-  gpio_init(PD_GPXX_PIN);
-  gpio_set_dir(PD_GPXX_PIN, GPIO_OUT);
-  gpio_put(PD_GPXX_PIN, true);
-
-  // 1. Handshake / Connection Check
-  // The SA818 responds with "+DMOSETGROUP:0" if awake
+  // Connection Check
   uart_puts(RADIO_UART, "AT+DMOCONNECT\r\n");
   sleep_ms(200);
 
@@ -78,9 +66,7 @@ bool ConfigureRadio(const char *freq) {
     printf("No response from SA818. Check PD pin and wiring!\n");
   }
 
-  // 2. Setup Group (Frequency, Bandwidth, etc.)
-  // Syntax: AT+DMOSETGROUP=GBW,TFV,RFV,TX_CXCSS,SQ,RX_CXCSS
-
+  // Setup Group (Frequency, Bandwidth, etc.)
   char command[64];
   snprintf(command, sizeof(command), "AT+DMOSETGROUP=0,%s,%s,0000,4,0000\r\n",
            freq, freq);
@@ -88,7 +74,7 @@ bool ConfigureRadio(const char *freq) {
   printf("Sending: %s", command);
   uart_puts(RADIO_UART, command);
 
-  // 3. Wait for response
+  // Wait for response
   bool success = false;
   printf("Response: ");
 
@@ -101,18 +87,11 @@ bool ConfigureRadio(const char *freq) {
   }
   printf("\n");
 
-  // 4. Set Volume (Optional but recommended for APRS)
-  // AT+DMOSETVOLUME=x (x=1 to 8)
+  // Set Volume
   uart_puts(RADIO_UART, "AT+DMOSETVOLUME=5\r\n");
   while (uart_is_readable(RADIO_UART)) {
     putchar(uart_getc(RADIO_UART));
   }
-
-  // uart_puts(RADIO_UART, "AT+SETFILTER=1,1,1\r\n");
-  // sleep_ms(200);
-  // while (uart_is_readable(RADIO_UART)) {
-  //   putchar(uart_getc(RADIO_UART)); // Expect +SETFILTER:0
-  // }
 
   return success;
 }
@@ -130,12 +109,12 @@ double nmea_to_decimal(float nmea_coord, char direction) {
 gps_data_t parse_gprmc(char *line) {
   gps_data_t data = {0, 0, 0, false};
 
-  // 1. Look for RMC anywhere in the string
+  // Look for RMC anywhere in the string
   char *start = strstr(line, "RMC");
   if (!start)
     return data;
 
-  // 2. Create a working copy because strsep modifies the string
+  // Create a working copy because strsep modifies the string
   char work_line[128];
   strncpy(work_line, start, sizeof(work_line));
 
@@ -181,34 +160,40 @@ int main() {
     sleep_ms(100);
   }
 
+  // Power Down Pin
+  gpio_init(PD_GPXX_PIN);
+  gpio_set_dir(PD_GPXX_PIN, GPIO_OUT);
+  gpio_put(PD_GPXX_PIN, true);
+
   // Force Receive mode so UART works
   gpio_init(PTT_GPXX_PIN);
   gpio_set_dir(PTT_GPXX_PIN, GPIO_OUT);
   gpio_put(PTT_GPXX_PIN, true);
   sleep_ms(200);
 
-  // 2. Initialize Hardware UART for the Radio
+  // Initialize Hardware UART for the Radio
   uart_init(RADIO_UART, RADIO_BAUD);
   gpio_set_function(RADIO_TX_PIN, GPIO_FUNC_UART);
   gpio_set_function(RADIO_RX_PIN, GPIO_FUNC_UART);
 
-  // 2. Initialize Hardware UART for the GPS
+  // Initialize Hardware UART for the GPS
   uart_init(GPS_UART, GPS_BAUD);
   gpio_set_function(GPS_TX_PIN, GPIO_FUNC_UART);
   gpio_set_function(GPS_RX_PIN, GPIO_FUNC_UART);
 
-  // 3. Run your config
-  if (ConfigureRadio("144.8000")) {
+  // Configure Radio
+  if (configure_radio("144.8000")) {
     printf("Radio configured successfully!\n");
   } else {
     printf("Radio config failed.\n");
   }
 
-  uart_puts(RADIO_UART, "AT+DMOREADGROUP\r\n");
-  sleep_ms(200);
-  while (uart_is_readable(RADIO_UART)) {
-    putchar(uart_getc(RADIO_UART));
-  }
+  // Read group to check if it is configured correctly
+  //uart_puts(RADIO_UART, "AT+DMOREADGROUP\r\n");
+  //sleep_ms(200);
+  //while (uart_is_readable(RADIO_UART)) {
+  //  putchar(uart_getc(RADIO_UART));
+  //}
 
   audio_buffer_pool_t *audio_buffer_pool = aprs_pico_init();
   uint32_t last_tx_time = 0;
@@ -234,7 +219,6 @@ int main() {
           printf("GPS FIXED: Lat: %f, Lon: %f\n", current_gps.lat,
                  current_gps.lon);
         } else {
-          // This will help you see if the parser is at least seeing the strings
           if (strstr(gps_buffer, "RMC")) {
             printf("Found RMC string, but parser rejected it (Invalid Fix).\n");
           }
@@ -245,20 +229,19 @@ int main() {
       }
     }
 
-    // 2. Check if it's time to send the APRS beacon
+    //  Check if it's time to send the APRS beacon
     uint32_t current_time = to_ms_since_boot(get_absolute_time());
     if (current_time - last_tx_time >= tx_interval_ms) {
 
       if (current_gps.valid) {
         printf("10 minutes passed! Sending GPS fix...\n");
 
-        // 1. Physically disable the GPS UART interrupts/peripheral
+        // Physically disable the GPS UART interrupts/peripheral
         uart_deinit(GPS_UART);
 
         gpio_put(PTT_GPXX_PIN, false);
         sleep_ms(PTT_DELAY_BEFORE_TX_IN_MSEC);
 
-        // Send an APRS test message
         aprs_pico_sendAPRS(audio_buffer_pool,
                            "OE6UKN-12",                 // Source call sign
                            "APRS",                    // Destination call sign
@@ -273,12 +256,12 @@ int main() {
 
         gpio_put(PTT_GPXX_PIN, true);
 
-        // 3. Re-enable the GPS UART
+        // Re-enable the GPS UART
         uart_init(GPS_UART, GPS_BAUD);
         gpio_set_function(GPS_TX_PIN, GPIO_FUNC_UART);
         gpio_set_function(GPS_RX_PIN, GPIO_FUNC_UART);
 
-        // 2. Clear the UART buffer of all the "garbage" that arrived during TX
+        // Clear the UART buffer of all the "garbage" that arrived during TX
         while (uart_is_readable(GPS_UART)) {
           uart_getc(GPS_UART);
         }
@@ -286,7 +269,6 @@ int main() {
         last_tx_time = current_time;
       } else {
         printf("Time to send, but no GPS fix yet. Waiting...\n");
-        // Optional: Send anyway with last known location or wait 30s
       }
     }
     sleep_ms(1);
