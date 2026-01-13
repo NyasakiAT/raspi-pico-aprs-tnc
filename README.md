@@ -41,8 +41,6 @@ The line-out voltage can be as high as 2.7 V<sub>pp</sub> (~1 V<sub>rms</sub>) (
 
 ## Build the library and the 'beacon' demo application
 
-NOTE: In case you want to allow the Pico(2) to control the PTT (*Push-To-Talk*) input of your transmitter, set the appropriate `#define` parameters in `src/aprs_pico_beacon_demo.c`.
-
 ```
 git clone https://github.com/eleccoder/raspi-pico-aprs-tnc.git
 cd raspi-pico-aprs-tnc
@@ -50,9 +48,9 @@ cmake -S . -B build   # For Pico2: cmake -S . -B build DPICO_BOARD=pico2
 cmake --build build
 ```
 
-`build/lib/libaprs_pico.a` and `build/aprs_pico_beacon_demo[.uf2|.elf|.bin|.hex]` will be generated, as well as the testing application `build/aprs_pico_tone_test[.uf2|.elf|.bin|.hex]`.
+`build/lib/libaprs_pico.a` and `build/aprs_pico_beacon[.uf2|.elf|.bin|.hex]` will be generated.
 
-## Run the 'beacon' demo application
+## Run the 'beacon' application
 
 The analog AFSK audio signal will be available at the filter's line-out. You can probe it by a scope, listen to it by using an audio amp, or connect it to any RF transceiver to send it on the air (ham radio license required).
 
@@ -63,7 +61,7 @@ But for testing the signal integrity, you can feed the signal into the soundcard
 Flash the file `build/aprs_pico_beacon_demo[.uf2|.elf|.bin|.hex]` to the Pico(2) board in the same way as you're usually doing.
 
 
-### Test the 'beacon' demo application using *Dire Wolf* (on LINUX)
+### Test the 'beacon' application using *Dire Wolf* (on LINUX)
 
 We can use the famous [Dire Wolf](https://github.com/wb2osz/direwolf) CLI software to decode the APRS data after sampling our APRS audio signal by means of a soundcard.
 
@@ -90,7 +88,7 @@ arecord -f cd -c 1 - | direwolf -
 
 ![Decoded APRS message by Dire Wolf](https://github.com/eleccoder/raspi-pico-aprs-tnc/blob/main/doc/img/direwolf_decoding.png)
 
-### Audio file of the 'beacon' demo
+### Audio file of the 'beacon'
 
 Here is a [recorded audio wav-file](https://github.com/eleccoder/raspi-pico-aprs-tnc/blob/main/doc/aprs_pico_beacon_demo.wav) (44.1 kHz, mono, WAVE) captured by the soundcard using:
 
